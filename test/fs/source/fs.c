@@ -74,12 +74,12 @@ int main(void) {
         }
     }
 
-    FILE *fpr = NULL;
+    FILE *fp = NULL;
     /*Opening the file in "r" mode*/
-    fpr = fopen("test.txt", "r");
+    fp = fopen("test.txt", "r");
 
     /*Error handling for file open*/
-    if (fpr == NULL)
+    if (fp == NULL)
     {
         perror("fopen: Error");
     }
@@ -91,7 +91,39 @@ int main(void) {
 
         errno = 0;
 
-        int count = fscanf(fpr, "%s", str);
+        fread(str, MAX_BUFFER_SIZE, 1, fp);
+
+        if(errno)
+        {
+            perror("fread: Error");
+        }
+        else
+        {
+            printf("%s",str);
+
+            puts("fread: OK");
+        }
+
+        errno = 0;
+
+        err = fseek(fp, 0, SEEK_SET);
+
+        if (err)
+        {
+            perror("fseek: Error");
+        }
+        else
+        {
+            puts("fseek: OK");
+        }
+
+        errno = 0;
+
+        puts("test.txt:");
+
+        errno = 0;
+
+        int count = fscanf(fp, "%s", str);
 
         if (errno) 
         {
@@ -110,8 +142,8 @@ int main(void) {
 
         do
         {
-            c = fgetc(fpr);
-            if( feof(fpr) )
+            c = fgetc(fp);
+            if( feof(fp) )
             {
                 break ;
             }
@@ -127,7 +159,7 @@ int main(void) {
             puts("fgetc/feof: OK");
         }
 
-        err = fseek(fpr, 0, SEEK_SET);
+        err = fseek(fp, 0, SEEK_SET);
 
         if (err)
         {
@@ -143,7 +175,7 @@ int main(void) {
         puts("test.txt:");
 
         /*Loop for reading the file till end*/
-        for(int i = 0; fgets(str, MAX_BUFFER_SIZE, fpr); i++)
+        for(int i = 0; fgets(str, MAX_BUFFER_SIZE, fp); i++)
         {
             // <<fgets>>---get character string from a file or stream
             // Supporting OS subroutines required: <<close>>, <<fstat>>, <<isatty>>, <<lseek>>, <<read>>, <<sbrk>>, <<write>>.
@@ -162,7 +194,7 @@ int main(void) {
         errno = 0;
 
         /*Closing the input file after reading*/
-        err = fclose(fpr);
+        err = fclose(fp);
 
         if (err)
         {
