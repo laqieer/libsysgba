@@ -52,8 +52,8 @@ int main(void) {
     try{
         filesize = in.tellg();
         throw invalid_argument("throw test exception");
-    } catch(...) {
-        ;
+    } catch(exception const &e) {
+        cout << e.what() <<endl;
     }
     cout << "size: " << filesize << endl;
     in.seekg(0, ios::beg);
