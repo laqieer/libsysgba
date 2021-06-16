@@ -160,6 +160,15 @@ int main(void) {
         }
         printf("fseek %ld -> fread 10:\n%s\n", ftell(fp), str);
 
+        memset(str, 0, BUFFER_SIZE);
+        err = fseek(fp, 10, SEEK_SET);
+        if (err)
+        {
+            perror("fseek: Error");
+        }
+        read(fp->_file, str, 10);
+        printf("fseek 10 -> read 10:\n%s\n", str);
+
         errno = 0;
 
         //puts("test.txt:");
@@ -174,7 +183,7 @@ int main(void) {
         } 
         else 
         {
-            puts("fscanf: OK");
+//            puts("fscanf: OK");
             if (count != EOF)
             {
                 printf("%s", str);
@@ -210,7 +219,7 @@ int main(void) {
         }
         else
         {
-            puts("fgetc: OK");
+//            puts("fgetc: OK");
         }
 
         err = fseek(fp, 0, SEEK_SET);
@@ -242,7 +251,7 @@ int main(void) {
         }
         else
         {
-            puts("fgets: OK");
+//            puts("fgets: OK");
         }
 
         errno = 0;
