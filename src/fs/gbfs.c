@@ -82,6 +82,8 @@ ssize_t gbfs_read(struct _reent *r,void *fileStruct,char *ptr,size_t len) {
 
     memcpy(ptr, fs->cur, length);
 
+    ptr[length] = '\0';
+
     fs->cur += length;
 
 	return 0;
