@@ -60,7 +60,7 @@ int main(void) {
             puts("read: OK");
         }
 
-        //printf("test.txt:\n%s", str);
+        printf("%s", str);
 
         off_t filesize = lseek(fd, 0, SEEK_END);
 
@@ -140,6 +140,10 @@ int main(void) {
         {
             puts("fseek: OK");
         }
+
+        fseek(fp, 10, SEEK_SET);
+        fread(str, BUFFER_SIZE, 1, fp);
+        printf("fseek %ld -> fread:\n%s", ftell(fp), str);
 
         errno = 0;
 

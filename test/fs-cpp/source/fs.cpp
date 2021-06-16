@@ -51,7 +51,7 @@ int main(void) {
     in.seekg(0, ios::end);
     try{
         filesize = in.tellg();
-        //throw invalid_argument("throw test exception");
+        throw invalid_argument("throw test exception");
     } catch(...) {
         ;
     }
