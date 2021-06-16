@@ -5,6 +5,7 @@
 #include <gba_systemcalls.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -47,7 +48,7 @@ int main(void) {
     }
     else
     {
-        puts("open: OK");
+//        puts("open: OK");
 
         ssize_t count = read(fd, str, sizeof(str));
 
@@ -70,9 +71,13 @@ int main(void) {
         }
         else
         {
-            puts("lseek: OK");
+//            puts("lseek: OK");
             printf("size: %lld\n", filesize);
         }
+
+        lseek(fd, 10, SEEK_SET);
+        read(fd, str, 10);
+        printf("lseek 10 -> read 10:\n%s\n", str);
 
         err = close(fd);
 
@@ -82,7 +87,7 @@ int main(void) {
         }
         else
         {
-            puts("close: OK");
+//            puts("close: OK");
         }
     }
 
@@ -97,7 +102,7 @@ int main(void) {
     }
     else
     {
-        puts("fopen: OK");
+//        puts("fopen: OK");
 
         //puts("test.txt:");
 
@@ -111,9 +116,9 @@ int main(void) {
         }
         else
         {
-            printf("%s",str);
-
             puts("fread: OK");
+
+            printf("%s",str);
         }
 
         errno = 0;
@@ -126,7 +131,7 @@ int main(void) {
         }
         else
         {
-            puts("ftell: OK");
+//            puts("ftell: OK");
             printf("size: %d\n", filesize);
         }
 
@@ -138,16 +143,26 @@ int main(void) {
         }
         else
         {
-            puts("fseek: OK");
+//            puts("fseek: OK");
         }
 
-        fseek(fp, 10, SEEK_SET);
-        fread(str, BUFFER_SIZE, 1, fp);
-        printf("fseek %ld -> fread:\n%s", ftell(fp), str);
+        memset(str, 0, BUFFER_SIZE);
+        err = fseek(fp, 10, SEEK_SET);
+        if (err)
+        {
+            perror("fseek: Error");
+        }
+        errno = 0;
+        fread(str, 10, 1, fp);
+        if (errno)
+        {
+            perror("fread: Error");
+        }
+        printf("fseek %ld -> fread 10:\n%s\n", ftell(fp), str);
 
         errno = 0;
 
-        puts("test.txt:");
+        //puts("test.txt:");
 
         errno = 0;
 
@@ -191,11 +206,11 @@ int main(void) {
 
         if (errno)
         {
-            perror("fgetc/feof: Error");
+            perror("fgetc: Error");
         }
         else
         {
-            puts("fgetc/feof: OK");
+            puts("fgetc: OK");
         }
 
         err = fseek(fp, 0, SEEK_SET);
@@ -241,7 +256,7 @@ int main(void) {
         }
         else
         {
-            puts("fclose: OK");
+//            puts("fclose: OK");
         }
     }
 
