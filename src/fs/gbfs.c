@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <gba.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "libgbfs/gbfs.h"
 
@@ -86,9 +87,21 @@ int gbfs_open(struct _reent *r, void *fileStruct, const char *path, int flags, i
         return -1;
     }
 
+    if (path == NULL || strlen(path) == 0)
+    {
+        r->_errno = EINVAL;
+        return -1;
+    }
+
     if (strlen(path) > GBFS_FILENAME_MAX_LENGTH)
     {
         r->_errno = ENAMETOOLONG;
+        return -1;
+    }
+
+    if ((flags & O_WRONLY) || (flags & O_RDWR))
+    {
+        r->_errno = EROFS;
         return -1;
     }
 
@@ -193,7 +206,7 @@ int gbfs_stat(struct _reent *r, const char *file, struct stat *st) {
         return -1;
     }
 
-    if (!file)
+    if (file == NULL || strlen(file) == 0)
     {
         r->_errno = EINVAL;
         return -1;
