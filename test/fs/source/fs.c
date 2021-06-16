@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <gba_sys.h>
 
-#define MAX_BUFFER_SIZE 100
+#define BUFFER_SIZE 100
 
 //---------------------------------------------------------------------------------
 // Program entry point
@@ -32,7 +32,7 @@ int main(void) {
     fsInit();
 
     /*Char array to store string */
-    char str[MAX_BUFFER_SIZE] = {0};
+    char str[BUFFER_SIZE] = {0};
 
     int err = 0;
 
@@ -60,7 +60,19 @@ int main(void) {
             puts("read: OK");
         }
 
-        printf("test.txt:\n%s", str);
+        //printf("test.txt:\n%s", str);
+
+        off_t filesize = lseek(fd, 0, SEEK_END);
+
+        if (filesize == -1)
+        {
+            perror("lseek: Error");
+        }
+        else
+        {
+            puts("lseek: OK");
+            printf("size: %lld\n", filesize);
+        }
 
         err = close(fd);
 
@@ -87,11 +99,11 @@ int main(void) {
     {
         puts("fopen: OK");
 
-        puts("test.txt:");
+        //puts("test.txt:");
 
         errno = 0;
 
-        fread(str, MAX_BUFFER_SIZE, 1, fp);
+        fread(str, BUFFER_SIZE, 1, fp);
 
         if(errno)
         {
@@ -105,6 +117,18 @@ int main(void) {
         }
 
         errno = 0;
+        
+        int filesize = ftell(fp);
+
+        if (filesize == -1)
+        {
+            perror("ftell: Error");
+        }
+        else
+        {
+            puts("ftell: OK");
+            printf("size: %d\n", filesize);
+        }
 
         err = fseek(fp, 0, SEEK_SET);
 
@@ -138,6 +162,17 @@ int main(void) {
             }
         }
 
+        err = fseek(fp, 0, SEEK_SET);
+
+        if (err)
+        {
+            perror("fseek: Error");
+        }
+        else
+        {
+            //puts("fseek: OK");
+        }
+
         errno = 0;
 
         do
@@ -167,15 +202,15 @@ int main(void) {
         }
         else
         {
-            puts("fseek: OK");
+            //puts("fseek: OK");
         }
 
         errno = 0;
 
-        puts("test.txt:");
+        //puts("test.txt:");
 
         /*Loop for reading the file till end*/
-        for(int i = 0; fgets(str, MAX_BUFFER_SIZE, fp); i++)
+        for(int i = 0; fgets(str, filesize < BUFFER_SIZE? filesize: BUFFER_SIZE, fp); i++)
         {
             // <<fgets>>---get character string from a file or stream
             // Supporting OS subroutines required: <<close>>, <<fstat>>, <<isatty>>, <<lseek>>, <<read>>, <<sbrk>>, <<write>>.
