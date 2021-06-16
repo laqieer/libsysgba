@@ -154,6 +154,7 @@ int main(void) {
         }
         errno = 0;
         fread(str, 10, 1, fp);
+        //fread(str, 1, 10, fp);
         if (errno)
         {
             perror("fread: Error");
