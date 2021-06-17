@@ -105,6 +105,8 @@ int main(void) {
 //        puts("fopen: OK");
 
         //puts("test.txt:");
+        
+        setbuf(fp, NULL);
 
         errno = 0;
 
