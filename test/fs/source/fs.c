@@ -106,7 +106,8 @@ int main(void) {
 
         //puts("test.txt:");
         
-        setbuf(fp, NULL);
+        //setbuf(fp, NULL);
+        setvbuf(fp, NULL, _IONBF, 0);
 
         errno = 0;
 
