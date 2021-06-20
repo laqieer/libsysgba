@@ -86,7 +86,7 @@ ssize_t gbfs_read(struct _reent *r,void *fileStruct,char *ptr,size_t len) {
 
     fs->cur += length;
 
-	return 0;
+	return length;
 }
 
 //---------------------------------------------------------------------------------
