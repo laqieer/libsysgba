@@ -1,5 +1,7 @@
 # libsysgba
 
+![workflow](https://github.com/laqieer/libsysgba/actions/workflows/c-cpp.yml/badge.svg)
+
 Standard system call implementations for Game Boy Advance.
 
 ## Dependency
