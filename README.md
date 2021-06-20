@@ -6,6 +6,12 @@ Standard system call implementations for Game Boy Advance.
 
 It needs libsysbase in [devkitPro](https://devkitpro.org/wiki/Getting_Started) to work.
 
+## Build
+```
+make
+make test
+```
+
 ## Feature
 
 ### Support File I/O in C++ and C
