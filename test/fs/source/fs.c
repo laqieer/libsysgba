@@ -15,6 +15,16 @@
 
 #define BUFFER_SIZE 100
 
+void print_fp(FILE *fp) {
+    printf("_p:%x,_r:%d,_flags:%x,_bf:%x(%d),_offset:%lld,", fp->_p, fp->_r, fp->_flags, fp->_bf._base, fp->_bf._size, fp->_offset);
+    if(fp->_cookie)
+    {
+        printf("_cookie:%x\n",fp->_cookie);
+        if(fp->_cookie != fp)
+            print_fp(fp->_cookie);
+    }
+}
+
 //---------------------------------------------------------------------------------
 // Program entry point
 //---------------------------------------------------------------------------------
@@ -107,7 +117,7 @@ int main(void) {
         //puts("test.txt:");
         
         //setbuf(fp, NULL);
-        setvbuf(fp, NULL, _IONBF, 0);
+        //setvbuf(fp, NULL, _IONBF, 0);
 
         errno = 0;
 
@@ -156,26 +166,14 @@ int main(void) {
             perror("fseek: Error");
         }
         errno = 0;
+        printf("fseek %ld -> fread 10:\n", ftell(fp));
         fread(str, 10, 1, fp);
         //fread(str, 1, 10, fp);
         if (errno)
         {
             perror("fread: Error");
         }
-        printf("fseek %ld -> fread 10:\n%s\n", ftell(fp), str);
-
-        memset(str, 0, BUFFER_SIZE);
-        err = fseek(fp, 10, SEEK_SET);
-        if (err)
-        {
-            perror("fseek: Error");
-        }
-        read(fp->_file, str, 10);
-        printf("fseek 10 -> read 10:\n%s\n", str);
-
-        errno = 0;
-
-        //puts("test.txt:");
+        printf("%s\n", str);
 
         errno = 0;
 
@@ -192,17 +190,6 @@ int main(void) {
             {
                 printf("%s", str);
             }
-        }
-
-        err = fseek(fp, 0, SEEK_SET);
-
-        if (err)
-        {
-            perror("fseek: Error");
-        }
-        else
-        {
-            //puts("fseek: OK");
         }
 
         errno = 0;
@@ -223,7 +210,7 @@ int main(void) {
         }
         else
         {
-//            puts("fgetc: OK");
+            puts("fgetc: OK");
         }
 
         err = fseek(fp, 0, SEEK_SET);
@@ -255,7 +242,7 @@ int main(void) {
         }
         else
         {
-//            puts("fgets: OK");
+            puts("fgets: OK");
         }
 
         errno = 0;

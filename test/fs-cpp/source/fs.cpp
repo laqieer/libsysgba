@@ -46,19 +46,19 @@ int main(void) {
     in.seekg(0, ios::beg);
 
     in >> buf;
-    cout << buf;
+    cout << buf << endl;
 
     in.seekg(0, ios::end);
     try{
         filesize = in.tellg();
-        throw invalid_argument("throw test exception");
+        //throw invalid_argument("throw test exception");
     } catch(exception const &e) {
         cout << e.what() <<endl;
     }
     cout << "size: " << filesize << endl;
     in.seekg(0, ios::beg);
 
-    in.read(buf, BUFFER_SIZE);
+    in.read(buf, 10);
     if (in.bad())
     {
         cerr << "Read/writing error on i/o operation";
@@ -77,12 +77,13 @@ int main(void) {
     }
     if (in)
     {
-        cout << buf;
+        cout << buf << endl;
     }
     cout << "Read " << in.gcount() << " chars" << endl;
 
     cout << "tellg: " << in.tellg() << endl;
 
+    in.seekg(0, ios::beg);
     in.getline(buf, BUFFER_SIZE);
     if (in.bad())
     {
