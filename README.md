@@ -24,7 +24,7 @@ fscanf(fp, "%d %d", &i, &j);
 ```
 
 ```C++
-ifstream fs("xxx.txt");
-stringstream ss;
+std::ifstream fs("xxx.txt");
+std::stringstream ss;
 ss << fs.rdbuf();
 ```
