@@ -4,3 +4,4 @@
 *.sav
 *.gbfs
 build/
+lib/
