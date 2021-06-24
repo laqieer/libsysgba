@@ -39,7 +39,7 @@ ss << fs.rdbuf();
 
 ### Access Backup Media as File
 
-It allows you to access backup media with File I/O. Special filename "sram:" is preserved for that.
+It allows you to access backup media with File I/O. Special filename `sram` is preserved for that.
 
 ```C
 int fd = open("sram:", O_RDWR);
