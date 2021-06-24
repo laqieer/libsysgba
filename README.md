@@ -36,3 +36,7 @@ std::ifstream fs("xxx.txt");
 std::stringstream ss;
 ss << fs.rdbuf();
 ```
+
+### Access Backup Media as File
+
+It allows you to access backup media with File I/O in C++ and C. Special filenames including "sram:" are preserved for that.
