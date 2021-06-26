@@ -39,4 +39,19 @@ ss << fs.rdbuf();
 
 ### Access Backup Media as File
 
-It allows you to access backup media with File I/O in C++ and C. Special filenames including "sram:" are preserved for that.
+It allows you to access backup media with File I/O in C++ and C.
+
+Special filenames preserved for that:
+
+- `sram:`
+- `eeprom:`
+
+```C
+int fd = open("sram:", O_RDWR);
+FILE *fp = fopen("sram:", "r+");
+```
+
+```C
+int fd = open("eeprom:", O_RDWR);
+FILE *fp = fopen("eeprom:", "r+");
+```

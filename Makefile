@@ -35,7 +35,9 @@ export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 
 export OFILES	:=	$(OFILES_SRC)
 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) -I$(LIBGBA)/include
+LIBTONC 	:= $(LIBGBA)/../libtonc
+
+export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) -I$(LIBGBA)/include -I$(LIBTONC)/include
 export DEPSDIR	:=	$(CURDIR)/build
 
 .PHONY: $(BUILD) test clean
