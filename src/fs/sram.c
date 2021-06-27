@@ -14,7 +14,8 @@ typedef struct {
 
 static int sramInitialised = 0;
 
-#define SRAM_SIZE 0x10000
+#define SRAM_SIZE 0x8000
+#define SRAM_EXT_SIZE 0x10000
 
 IWRAM_CODE
 void sram_memcpy(volatile unsigned char *dst, const volatile unsigned char *src, size_t size) {
@@ -165,6 +166,24 @@ int sram_open(struct _reent *r, void *fileStruct, const char *path, int flags, i
     return 0;
 }
 
+//---------------------------------------------------------------------------------
+int sram_ext_open(struct _reent *r, void *fileStruct, const char *path, int flags, int mode) {
+//---------------------------------------------------------------------------------
+    if (!sramInitialised)
+    {
+        r->_errno = ENODEV;
+        return -1;
+    }
+
+    SramFileStruct *fs = fileStruct;
+
+    fs->base = (volatile unsigned char *)SRAM;
+    fs->len = SRAM_EXT_SIZE;
+    fs->cur = fs->base;
+
+    return 0;
+}
+
 off_t sram_seek(struct _reent *r, void *fileStruct, off_t pos, int dir) {
     if (!sramInitialised)
     {
@@ -248,11 +267,39 @@ const devoptab_t dotab_sram = {
 	NULL
 };
 
+const devoptab_t dotab_sram_64KB = {
+	"sram_64KB",
+	sizeof(SramFileStruct),
+	sram_ext_open,
+	sram_close,
+	sram_write,
+	sram_read,
+	sram_seek,
+    sram_fstat,
+    sram_stat,
+	NULL
+};
+
+const devoptab_t dotab_sram_512Kb = {
+	"sram_512Kb",
+	sizeof(SramFileStruct),
+	sram_ext_open,
+	sram_close,
+	sram_write,
+	sram_read,
+	sram_seek,
+    sram_fstat,
+    sram_stat,
+	NULL
+};
+
 void sramInit()
 {
     if (!sramInitialised)
     {
         sramInitialised = 1;
         AddDevice(&dotab_sram);
+        AddDevice(&dotab_sram_64KB);
+        AddDevice(&dotab_sram_512Kb);
     }
 }
