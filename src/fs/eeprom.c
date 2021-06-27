@@ -16,6 +16,7 @@ static int eepromInitialised = 0;
 
 #define EEPROM (unsigned char *)0x0D000000
 #define EEPROM_SIZE 0x200
+#define EEPROM_8KB_SIZE 0x2000
 
 void eeprom_memcpy(void *dst, const void *src, size_t size)
 {
@@ -31,12 +32,6 @@ int _eeprom_read(struct _reent *r, u32 addr, u8 *data)
 {
     u16 buffer[68];
     u16 d[4];
-
-    if (addr > EEPROM_SIZE / 8 - 1)
-    {
-        r->_errno = EINVAL;
-        return -1;
-    }
 
     buffer[0] = 1;
     buffer[1] = 1;
@@ -71,16 +66,10 @@ int _eeprom_read(struct _reent *r, u32 addr, u8 *data)
     return 0;
 }
 
-int _eeprom_write(struct _reent *r, u32 addr, u8 *data)
+int _eeprom_write(struct _reent *r, u32 addr, cu8 *data)
 {
     u16 buffer[73];
     u16 d[4];
-
-    if (addr > EEPROM_SIZE / 8 - 1)
-    {
-        r->_errno = EINVAL;
-        return -1;
-    }
 
     d[0] = data[0] + (data[1] << 8);
     d[1] = data[2] + (data[3] << 8);
@@ -109,6 +98,75 @@ int _eeprom_write(struct _reent *r, u32 addr, u8 *data)
     return 0;
 }
 
+int _eeprom_8KB_read(struct _reent *r, u32 addr, u8 *data)
+{
+    u16 buffer[68];
+    u16 d[4];
+
+    buffer[0] = 1;
+    buffer[1] = 1;
+    buffer[16] = 0;
+    for (int i = 15; i >= 2; i--)
+    {
+        buffer[i] = addr & 1;
+        addr = addr >> 1;
+    }
+    eeprom_memcpy(EEPROM, buffer, 17);
+
+    eeprom_memcpy(buffer, EEPROM, 68);
+
+    for (int i = 3; i >= 0; i--)
+    {
+        d[i] = 0;
+        for (int j = 0; j < 16; j++)
+        {
+            d[i] += buffer[4 + 16 * (3 - i) + j] << (15 - j);
+        }
+    }
+
+    data[0] = d[0] & 0xff;
+    data[1] = d[0] >> 8;
+    data[2] = d[1] & 0xff;
+    data[3] = d[1] >> 8;
+    data[4] = d[2] & 0xff;
+    data[5] = d[2] >> 8;
+    data[6] = d[3] & 0xff;
+    data[7] = d[3] >> 8;
+
+    return 0;
+}
+
+int _eeprom_8KB_write(struct _reent *r, u32 addr, cu8 *data)
+{
+    u16 buffer[81];
+    u16 d[4];
+
+    d[0] = data[0] + (data[1] << 8);
+    d[1] = data[2] + (data[3] << 8);
+    d[2] = data[4] + (data[5] << 8);
+    d[3] = data[6] + (data[7] << 8);
+
+    buffer[0] = 1;
+    buffer[1] = 0;
+    buffer[80] = 0;
+    for (int i = 15; i >= 2; i--)
+    {
+        buffer[i] = addr & 1;
+        addr = addr >> 1;
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 16; j++)
+        {
+            buffer[79 - 16 * i - j] = (d[i] >> j) & 1;
+        }
+    }
+    eeprom_memcpy(EEPROM, buffer, 81);
+
+    while(!((*EEPROM) & 1));
+
+    return 0;
+}
 
 signed int eeprom_memcmp(const unsigned char *dst, const unsigned char *src, size_t size)
 {
@@ -161,7 +219,7 @@ ssize_t eeprom_write(struct _reent *r,void *fileStruct ,const char *ptr,size_t l
 
     if (cur % 8 == 0 && length == 8)
     {
-        err = _eeprom_write(r, cur / 8, (u16*)ptr);
+        err = _eeprom_write(r, cur / 8, (cu8*)ptr);
         if (err)
         {
             return -1;
@@ -172,7 +230,7 @@ ssize_t eeprom_write(struct _reent *r,void *fileStruct ,const char *ptr,size_t l
 
     if (cur / 8 == (cur + length) / 8)
     {
-        err = _eeprom_read(r, cur / 8, (u16*)buffer);
+        err = _eeprom_read(r, cur / 8, (u8*)buffer);
         if (err)
         {
             return -1;
@@ -180,7 +238,7 @@ ssize_t eeprom_write(struct _reent *r,void *fileStruct ,const char *ptr,size_t l
 
         memcpy(buffer + cur % 8, ptr, length);
 
-        err = _eeprom_write(r, cur / 8, (u16*)buffer);
+        err = _eeprom_write(r, cur / 8, (cu8*)buffer);
         if (err)
         {
             return -1;
@@ -191,7 +249,7 @@ ssize_t eeprom_write(struct _reent *r,void *fileStruct ,const char *ptr,size_t l
 
     if (cur % 8)
     {
-        err = _eeprom_read(r, cur / 8, (u16*)buffer);
+        err = _eeprom_read(r, cur / 8, (u8*)buffer);
         if (err)
         {
             return -1;
@@ -199,7 +257,7 @@ ssize_t eeprom_write(struct _reent *r,void *fileStruct ,const char *ptr,size_t l
 
         memcpy(buffer + cur % 8, ptr, 8 - cur % 8);
 
-        err = _eeprom_write(r, cur / 8, (u16*)buffer);
+        err = _eeprom_write(r, cur / 8, (cu8*)buffer);
         if (err)
         {
             return -1;
@@ -208,7 +266,7 @@ ssize_t eeprom_write(struct _reent *r,void *fileStruct ,const char *ptr,size_t l
 
     if ((cur + length) % 8)
     {
-        err = _eeprom_read(r, (cur + length) / 8, (u16*)buffer);
+        err = _eeprom_read(r, (cur + length) / 8, (u8*)buffer);
         if (err)
         {
             return -1;
@@ -216,7 +274,7 @@ ssize_t eeprom_write(struct _reent *r,void *fileStruct ,const char *ptr,size_t l
 
         memcpy(buffer, ptr + length - (cur + length) % 8, (cur + length) % 8);
 
-        err = _eeprom_write(r, (cur + length) / 8, (u16*)buffer);
+        err = _eeprom_write(r, (cur + length) / 8, (cu8*)buffer);
         if (err)
         {
             return -1;
@@ -239,11 +297,11 @@ ssize_t eeprom_write(struct _reent *r,void *fileStruct ,const char *ptr,size_t l
     {
         if (cur % 8)
         {
-            err = _eeprom_write(r, i, (u16*)(ptr + 8 - cur % 8 + 8 * (i - start)));
+            err = _eeprom_write(r, i, (cu8*)(ptr + 8 - cur % 8 + 8 * (i - start)));
         }
         else
         {
-            err = _eeprom_write(r, i, (u16*)(ptr  + 8 * (i - start)));
+            err = _eeprom_write(r, i, (cu8*)(ptr  + 8 * (i - start)));
         }
         if (err)
         {
@@ -256,6 +314,149 @@ written:
 
 	return length;
 }
+
+//---------------------------------------------------------------------------------
+ssize_t eeprom_8KB_write(struct _reent *r,void *fileStruct ,const char *ptr,size_t len) {
+//---------------------------------------------------------------------------------
+    u8 buffer[8];
+    int err;
+
+    if (!eepromInitialised)
+    {
+        r->_errno = ENODEV;
+        return -1;
+    }
+
+    if (ptr == NULL)
+    {
+        r->_errno = EINVAL;
+        return -1;
+    }
+
+    if (fileStruct == NULL)
+    {
+        r->_errno = EBADF;
+        return -1;
+    }
+
+    eepromFileStruct *fs = fileStruct;
+
+    if (fs->cur == NULL)
+    {
+        r->_errno = EIO;
+        return -1;
+    }
+
+    u32 cur = fs->cur - fs->base;
+
+    size_t length = fs->len - cur;
+
+    if (length < len)
+    {
+        r->_errno = ENOSPC;
+        return -1;
+    }
+
+    length = len;
+
+    if (cur % 8 == 0 && length == 8)
+    {
+        err = _eeprom_8KB_write(r, cur / 8, (cu8*)ptr);
+        if (err)
+        {
+            return -1;
+        }
+
+        goto written_8KB;
+    }
+
+    if (cur / 8 == (cur + length) / 8)
+    {
+        err = _eeprom_8KB_read(r, cur / 8, (u8*)buffer);
+        if (err)
+        {
+            return -1;
+        }
+
+        memcpy(buffer + cur % 8, ptr, length);
+
+        err = _eeprom_8KB_write(r, cur / 8, (cu8*)buffer);
+        if (err)
+        {
+            return -1;
+        }
+
+        goto written_8KB;
+    }
+
+    if (cur % 8)
+    {
+        err = _eeprom_8KB_read(r, cur / 8, (u8*)buffer);
+        if (err)
+        {
+            return -1;
+        }
+
+        memcpy(buffer + cur % 8, ptr, 8 - cur % 8);
+
+        err = _eeprom_8KB_write(r, cur / 8, (cu8*)buffer);
+        if (err)
+        {
+            return -1;
+        }
+    }
+
+    if ((cur + length) % 8)
+    {
+        err = _eeprom_8KB_read(r, (cur + length) / 8, (u8*)buffer);
+        if (err)
+        {
+            return -1;
+        }
+
+        memcpy(buffer, ptr + length - (cur + length) % 8, (cur + length) % 8);
+
+        err = _eeprom_8KB_write(r, (cur + length) / 8, (cu8*)buffer);
+        if (err)
+        {
+            return -1;
+        }
+    }
+
+    int start = cur / 8;
+    if (cur % 8)
+    {
+        start++;
+    }
+    int end = (cur + length) / 8 - 1;
+
+    if (start > end)
+    {
+        goto written_8KB;
+    }
+
+    for (int i = start; i <= end; i++)
+    {
+        if (cur % 8)
+        {
+            err = _eeprom_8KB_write(r, i, (cu8*)(ptr + 8 - cur % 8 + 8 * (i - start)));
+        }
+        else
+        {
+            err = _eeprom_8KB_write(r, i, (cu8*)(ptr  + 8 * (i - start)));
+        }
+        if (err)
+        {
+            return -1;
+        }
+    }
+
+written_8KB:
+    fs->cur += length;
+
+	return length;
+}
+
 
 //---------------------------------------------------------------------------------
 int eeprom_close(struct _reent *r,void *fileStruct) {
@@ -317,7 +518,7 @@ ssize_t eeprom_read(struct _reent *r,void *fileStruct,char *ptr,size_t len) {
 
     if (cur % 8 == 0 && length == 8)
     {
-        err = _eeprom_read(r, cur / 8, (u16*)ptr);
+        err = _eeprom_read(r, cur / 8, (u8*)ptr);
         if (err)
         {
             return -1;
@@ -328,7 +529,7 @@ ssize_t eeprom_read(struct _reent *r,void *fileStruct,char *ptr,size_t len) {
 
     if (cur / 8 == (cur + length) / 8)
     {
-        err = _eeprom_read(r, cur / 8, (u16*)buffer);
+        err = _eeprom_read(r, cur / 8, (u8*)buffer);
         if (err)
         {
             return -1;
@@ -341,7 +542,7 @@ ssize_t eeprom_read(struct _reent *r,void *fileStruct,char *ptr,size_t len) {
 
     if (cur % 8)
     {
-        err = _eeprom_read(r, cur / 8, (u16*)buffer);
+        err = _eeprom_read(r, cur / 8, (u8*)buffer);
         if (err)
         {
             return -1;
@@ -352,7 +553,7 @@ ssize_t eeprom_read(struct _reent *r,void *fileStruct,char *ptr,size_t len) {
 
     if ((cur + length) % 8)
     {
-        err = _eeprom_read(r, (cur + length) / 8, (u16*)buffer);
+        err = _eeprom_read(r, (cur + length) / 8, (u8*)buffer);
         if (err)
         {
             return -1;
@@ -377,11 +578,11 @@ ssize_t eeprom_read(struct _reent *r,void *fileStruct,char *ptr,size_t len) {
     {
         if (cur % 8)
         {
-            err = _eeprom_read(r, i, (u16*)(ptr + 8 - cur % 8 + 8 * (i - start)));
+            err = _eeprom_read(r, i, (u8*)(ptr + 8 - cur % 8 + 8 * (i - start)));
         }
         else
         {
-            err = _eeprom_read(r, i, (u16*)(ptr + 8 * (i - start)));
+            err = _eeprom_read(r, i, (u8*)(ptr + 8 * (i - start)));
         }
         if (err)
         {
@@ -390,6 +591,129 @@ ssize_t eeprom_read(struct _reent *r,void *fileStruct,char *ptr,size_t len) {
     }
 
 readed:
+    ptr[length] = '\0';
+
+    fs->cur += length;
+
+	return length;
+}
+
+//---------------------------------------------------------------------------------
+ssize_t eeprom_8KB_read(struct _reent *r,void *fileStruct,char *ptr,size_t len) {
+//---------------------------------------------------------------------------------
+    u8 buffer[8];
+    int err;
+
+    if (!eepromInitialised)
+    {
+        r->_errno = ENODEV;
+        return -1;
+    }
+
+    if (ptr == NULL)
+    {
+        r->_errno = EINVAL;
+        return -1;
+    }
+
+    if (fileStruct == NULL)
+    {
+        r->_errno = EBADF;
+        return -1;
+    }
+
+    eepromFileStruct *fs = fileStruct;
+
+    if (fs->cur == NULL)
+    {
+        r->_errno = EIO;
+        return -1;
+    }
+
+    u32 cur = fs->cur - fs->base;
+
+    size_t length = fs->len - cur;
+
+    if (length > len)
+    {
+        length = len;
+    }
+
+    if (cur % 8 == 0 && length == 8)
+    {
+        err = _eeprom_8KB_read(r, cur / 8, (u8*)ptr);
+        if (err)
+        {
+            return -1;
+        }
+
+        goto readed_8KB;
+    }
+
+    if (cur / 8 == (cur + length) / 8)
+    {
+        err = _eeprom_8KB_read(r, cur / 8, (u8*)buffer);
+        if (err)
+        {
+            return -1;
+        }
+
+        memcpy(ptr, buffer, length);
+
+        goto readed_8KB;
+    }
+
+    if (cur % 8)
+    {
+        err = _eeprom_8KB_read(r, cur / 8, (u8*)buffer);
+        if (err)
+        {
+            return -1;
+        }
+
+        memcpy(ptr, buffer + cur % 8, 8 - cur % 8);
+    }
+
+    if ((cur + length) % 8)
+    {
+        err = _eeprom_8KB_read(r, (cur + length) / 8, (u8*)buffer);
+        if (err)
+        {
+            return -1;
+        }
+
+        memcpy(ptr + length - (cur + length) % 8, buffer, (cur + length) % 8);
+    }
+
+    int start = cur / 8;
+    if (cur % 8)
+    {
+        start++;
+    }
+    int end = (cur + length) / 8 - 1;
+
+    if (start > end)
+    {
+        goto readed_8KB;
+    }
+
+    for (int i = start; i <= end; i++)
+    {
+        if (cur % 8)
+        {
+            err = _eeprom_8KB_read(r, i, (u8*)(ptr + 8 - cur % 8 + 8 * (i - start)));
+        }
+        else
+        {
+            err = _eeprom_8KB_read(r, i, (u8*)(ptr + 8 * (i - start)));
+        }
+        if (err)
+        {
+            return -1;
+        }
+    }
+
+readed_8KB:
     ptr[length] = '\0';
 
     fs->cur += length;
@@ -410,6 +734,24 @@ int eeprom_open(struct _reent *r, void *fileStruct, const char *path, int flags,
 
     fs->base = (unsigned char *)EEPROM;
     fs->len = EEPROM_SIZE;
+    fs->cur = fs->base;
+
+    return 0;
+}
+
+//---------------------------------------------------------------------------------
+int eeprom_8KB_open(struct _reent *r, void *fileStruct, const char *path, int flags, int mode) {
+//---------------------------------------------------------------------------------
+    if (!eepromInitialised)
+    {
+        r->_errno = ENODEV;
+        return -1;
+    }
+
+    eepromFileStruct *fs = fileStruct;
+
+    fs->base = (unsigned char *)EEPROM;
+    fs->len = EEPROM_8KB_SIZE;
     fs->cur = fs->base;
 
     return 0;
@@ -498,11 +840,67 @@ const devoptab_t dotab_eeprom = {
 	NULL
 };
 
+const devoptab_t dotab_eeprom_512B = {
+	"eeprom_512B",
+	sizeof(eepromFileStruct),
+	eeprom_open,
+	eeprom_close,
+	eeprom_write,
+	eeprom_read,
+	eeprom_seek,
+    eeprom_fstat,
+    eeprom_stat,
+	NULL
+};
+
+const devoptab_t dotab_eeprom_4Kb = {
+	"eeprom_4Kb",
+	sizeof(eepromFileStruct),
+	eeprom_open,
+	eeprom_close,
+	eeprom_write,
+	eeprom_read,
+	eeprom_seek,
+    eeprom_fstat,
+    eeprom_stat,
+	NULL
+};
+
+const devoptab_t dotab_eeprom_8KB = {
+	"eeprom_8KB",
+	sizeof(eepromFileStruct),
+	eeprom_8KB_open,
+	eeprom_close,
+	eeprom_8KB_write,
+	eeprom_8KB_read,
+	eeprom_seek,
+    eeprom_fstat,
+    eeprom_stat,
+	NULL
+};
+
+const devoptab_t dotab_eeprom_64Kb = {
+	"eeprom_64Kb",
+	sizeof(eepromFileStruct),
+	eeprom_8KB_open,
+	eeprom_close,
+	eeprom_8KB_write,
+	eeprom_8KB_read,
+	eeprom_seek,
+    eeprom_fstat,
+    eeprom_stat,
+	NULL
+};
+
 void eepromInit()
 {
     if (!eepromInitialised)
     {
         eepromInitialised = 1;
         AddDevice(&dotab_eeprom);
+        AddDevice(&dotab_eeprom_512B);
+        AddDevice(&dotab_eeprom_4Kb);
+        AddDevice(&dotab_eeprom_8KB);
+        AddDevice(&dotab_eeprom_64Kb);
     }
 }
