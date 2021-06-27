@@ -44,7 +44,13 @@ It allows you to access backup media with File I/O in C++ and C.
 Special filenames preserved for that:
 
 - `sram:`
+- `sram_64KB:`
+- `sram_512Kb:`
 - `eeprom:`
+- `eeprom_512B:`
+- `eeprom_4Kb:`
+- `eeprom_8KB:`
+- `eeprom_64Kb:`
 
 ```C
 int fd = open("sram:", O_RDWR);
