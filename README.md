@@ -1,6 +1,7 @@
 # libsysgba
 
 ![workflow](https://github.com/laqieer/libsysgba/actions/workflows/c-cpp.yml/badge.svg)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Flaqieer%2Flibsysgba.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Flaqieer%2Flibsysgba?ref=badge_shield)
 
 Standard system call implementations for Game Boy Advance.
 
@@ -61,3 +62,7 @@ FILE *fp = fopen("sram:", "r+");
 int fd = open("eeprom:", O_RDWR);
 FILE *fp = fopen("eeprom:", "r+");
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Flaqieer%2Flibsysgba.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Flaqieer%2Flibsysgba?ref=badge_large)
